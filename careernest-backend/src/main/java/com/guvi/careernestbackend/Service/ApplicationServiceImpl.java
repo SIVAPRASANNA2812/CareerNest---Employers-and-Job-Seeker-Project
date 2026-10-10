@@ -2,6 +2,9 @@ package com.guvi.careernestbackend.Service;
 
 import com.guvi.careernestbackend.DTO.ApplyRequestDTO;
 import com.guvi.careernestbackend.DTO.StatusUpdateRequestDTO;
+import com.guvi.careernestbackend.Exception.DuplicateApplicationException;
+import com.guvi.careernestbackend.Exception.ResourceNotFoundException;
+import com.guvi.careernestbackend.Exception.UnauthorizedActionException;
 import com.guvi.careernestbackend.Model.Application;
 import com.guvi.careernestbackend.Model.ApplicationStatus;
 import com.guvi.careernestbackend.Model.Job;
@@ -23,7 +26,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationRepository applicationRepository;
     private final JobRepository jobRepository;
     private final UserRepository userRepository;
-    private final TwilioService twilioService; // Injected for SMS
+    private final TwilioService twilioService;
 
     public ApplicationServiceImpl(ApplicationRepository applicationRepository,
                                   JobRepository jobRepository,
@@ -35,41 +38,30 @@ public class ApplicationServiceImpl implements ApplicationService {
         this.twilioService = twilioService;
     }
 
-    // 1. Apply for Job
+    // 1. Seeker applies for a job
     @Override
     public Map<String, Object> applyForJob(String jobId, ApplyRequestDTO request) {
-        Map<String, Object> response = new HashMap<>();
+        // Throws 404 if Job doesn't exist
+        Job job = jobRepository.findById(jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
 
-        Job job = jobRepository.findById(jobId).orElse(null);
-        if (job == null) {
-            response.put("success", false);
-            response.put("message", "Job not found with ID: " + jobId);
-            return response;
-        }
-
+        // Throws 403 if Job is closed
         if (job.getStatus() != JobStatus.OPEN) {
-            response.put("success", false);
-            response.put("message", "This job is closed for applications");
-            return response;
+            throw new UnauthorizedActionException("This job is closed for applications");
         }
 
-        User seeker = userRepository.findById(request.getSeekerId()).orElse(null);
-        if (seeker == null) {
-            response.put("success", false);
-            response.put("message", "Seeker not found with ID: " + request.getSeekerId());
-            return response;
-        }
+        // Throws 404 if Seeker doesn't exist
+        User seeker = userRepository.findById(request.getSeekerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Seeker not found with ID: " + request.getSeekerId()));
 
+        // Throws 403 if role is not JOB_SEEKER
         if (seeker.getRole() != Role.JOB_SEEKER) {
-            response.put("success", false);
-            response.put("message", "Only users with role JOB_SEEKER can apply for jobs");
-            return response;
+            throw new UnauthorizedActionException("Only users with role JOB_SEEKER can apply for jobs");
         }
 
+        // Throws 409 Conflict if already applied (duplicate prevention)
         if (applicationRepository.existsByJobIdAndSeekerId(jobId, request.getSeekerId())) {
-            response.put("success", false);
-            response.put("message", "You have already applied for this job");
-            return response;
+            throw new DuplicateApplicationException("You have already applied for this job");
         }
 
         Application application = new Application();
@@ -84,37 +76,31 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Application savedApplication = applicationRepository.save(application);
 
+        Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "Application submitted successfully");
         response.put("application", savedApplication);
         return response;
     }
 
-    // 2. View My Applications
+    // 2. Seeker views their submitted applications
     @Override
     public List<Application> getApplicationsBySeeker(String seekerId) {
         return applicationRepository.findBySeekerId(seekerId);
     }
 
-    // 3. View Applications by Job
+    // 3. Employer views all applicants for a job
     @Override
     public List<Application> getApplicationsByJob(String jobId) {
         return applicationRepository.findByJobId(jobId);
     }
 
-    // 4. Update Status and Dispatch SMS
+    // 4. Update Status & Dispatch SMS (Throws 404 if application doesn't exist)
     @Override
     public Map<String, Object> updateApplicationStatus(String applicationId, StatusUpdateRequestDTO request) {
-        Map<String, Object> response = new HashMap<>();
+        Application application = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + applicationId));
 
-        Application application = applicationRepository.findById(applicationId).orElse(null);
-        if (application == null) {
-            response.put("success", false);
-            response.put("message", "Application not found with ID: " + applicationId);
-            return response;
-        }
-
-        // Update application status
         application.setStatus(request.getStatus());
         Application updatedApplication = applicationRepository.save(application);
 
@@ -130,6 +116,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         );
         twilioService.sendSms(application.getSeekerPhone(), smsText);
 
+        Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "Application status updated to " + request.getStatus() + " and SMS notification triggered");
         response.put("application", updatedApplication);

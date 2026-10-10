@@ -1,6 +1,7 @@
 package com.guvi.careernestbackend.DTO;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,7 +15,11 @@ public class ApplyRequestDTO {
     private String seekerId;
 
     @NotBlank(message = "Resume URL is required")
-    private String resumeUrl; // e.g. Link to Google Drive, LinkedIn, or Cloud resume
+    @Pattern(
+            regexp = "^(https?://).+",
+            message = "Resume URL must be a valid HTTP or HTTPS web link"
+    )
+    private String resumeUrl;
 
-    private String coverLetter; // Optional note to the employer
+    private String coverLetter;
 }

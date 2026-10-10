@@ -39,9 +39,9 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
-                .cors(Customizer.withDefaults()) // Enables CORS for React frontend
+                .cors(Customizer.withDefaults()) // Enables CORS bean below
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Public Authentication & Swagger
+                        // 1. Public Authentication (includes /refresh) & Swagger
                         .requestMatchers("/api/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
                         // 2. Public Job Search & Browsing
@@ -84,14 +84,26 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-    // CORS configuration for React frontend
+    // Hardened CORS configuration for React frontend & Production
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*"));
+
+        // Allowed Origins (Local Vite, CRA, and Cloud environments)
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:5173",
+                "http://localhost:3000",
+                "http://127.0.0.1:5173",
+                "https://*.vercel.app",
+                "https://*.netlify.app",
+                "https://*.onrender.com"
+        ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        config.setAllowedHeaders(List.of("*"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
+        config.setExposedHeaders(List.of("Authorization"));
         config.setAllowCredentials(true);
+        config.setMaxAge(3600L); // Preflight cache duration: 1 hour
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

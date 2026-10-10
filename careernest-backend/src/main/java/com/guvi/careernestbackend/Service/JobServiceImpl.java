@@ -1,6 +1,8 @@
 package com.guvi.careernestbackend.Service;
 
 import com.guvi.careernestbackend.DTO.JobRequestDTO;
+import com.guvi.careernestbackend.Exception.ResourceNotFoundException;
+import com.guvi.careernestbackend.Exception.UnauthorizedActionException;
 import com.guvi.careernestbackend.Model.Job;
 import com.guvi.careernestbackend.Model.JobStatus;
 import com.guvi.careernestbackend.Model.Role;
@@ -31,20 +33,13 @@ public class JobServiceImpl implements JobService {
     // 1. Create a new Job Listing
     @Override
     public Map<String, Object> createJob(JobRequestDTO request) {
-        Map<String, Object> response = new HashMap<>();
+        // Throws ResourceNotFoundException (404) if employer doesn't exist
+        User employer = userRepository.findById(request.getEmployerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employer not found with ID: " + request.getEmployerId()));
 
-        // Production Check: Ensure the user exists and is an EMPLOYER
-        User employer = userRepository.findById(request.getEmployerId()).orElse(null);
-        if (employer == null) {
-            response.put("success", false);
-            response.put("message", "Employer not found with ID: " + request.getEmployerId());
-            return response;
-        }
-
+        // Throws UnauthorizedActionException (403) if role is not EMPLOYER
         if (employer.getRole() != Role.EMPLOYER) {
-            response.put("success", false);
-            response.put("message", "Only users with role EMPLOYER are allowed to post jobs");
-            return response;
+            throw new UnauthorizedActionException("Only users with role EMPLOYER are allowed to post jobs");
         }
 
         // Map DTO to Job Model
@@ -61,6 +56,7 @@ public class JobServiceImpl implements JobService {
 
         Job savedJob = jobRepository.save(job);
 
+        Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "Job posted successfully");
         response.put("job", savedJob);
@@ -73,23 +69,18 @@ public class JobServiceImpl implements JobService {
         return jobRepository.findByEmployerId(employerId);
     }
 
-    // 3. Get single job by ID
+    // 3. Get single job by ID (Throws 404 if not found)
     @Override
     public Job getJobById(String id) {
-        return jobRepository.findById(id).orElse(null);
+        return jobRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + id));
     }
 
-    // 4. Update an existing Job Listing
+    // 4. Update an existing Job Listing (Throws 404 if not found)
     @Override
     public Map<String, Object> updateJob(String id, JobRequestDTO request) {
-        Map<String, Object> response = new HashMap<>();
-
-        Job existingJob = jobRepository.findById(id).orElse(null);
-        if (existingJob == null) {
-            response.put("success", false);
-            response.put("message", "Job not found with ID: " + id);
-            return response;
-        }
+        Job existingJob = jobRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + id));
 
         // Update fields
         existingJob.setTitle(request.getTitle());
@@ -102,24 +93,23 @@ public class JobServiceImpl implements JobService {
 
         Job updatedJob = jobRepository.save(existingJob);
 
+        Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "Job updated successfully");
         response.put("job", updatedJob);
         return response;
     }
 
-    // 5. Delete a Job Listing
+    // 5. Delete a Job Listing (Throws 404 if not found)
     @Override
     public Map<String, Object> deleteJob(String id) {
-        Map<String, Object> response = new HashMap<>();
-
         if (!jobRepository.existsById(id)) {
-            response.put("success", false);
-            response.put("message", "Job not found with ID: " + id);
-            return response;
+            throw new ResourceNotFoundException("Job not found with ID: " + id);
         }
 
         jobRepository.deleteById(id);
+
+        Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("message", "Job deleted successfully");
         return response;

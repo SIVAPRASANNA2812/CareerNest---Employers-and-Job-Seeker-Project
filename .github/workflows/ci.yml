@@ -1,0 +1,57 @@
+name: CareerNest Backend CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    name: Build, Test & Package
+    runs-on: ubuntu-latest
+
+    # Ephemeral MongoDB service container for test isolation
+    services:
+      mongodb:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd mongosh
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Run Automated Test Suite
+        working-directory: careernest-backend
+        env:
+          PORT: 8081
+          MONGODB_URI: mongodb://localhost:27017/careernest_test
+          JWT_SECRET: ciCdTestSecretKeyCareerNest2026SecureProductionTestKey123
+          TWILIO_ACCOUNT_SID: test_sid
+          TWILIO_AUTH_TOKEN: test_token
+          TWILIO_PHONE_NUMBER: +10000000000
+        run: mvn clean test
+
+      - name: Package Production JAR
+        working-directory: careernest-backend
+        run: mvn package -DskipTests
+
+      - name: Archive Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: careernest-backend-jar
+          path: careernest-backend/target/*.jar
+          retention-days: 7

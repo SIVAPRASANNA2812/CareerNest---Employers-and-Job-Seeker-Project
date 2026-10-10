@@ -13,7 +13,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
 @Document(collection = "applications")
-@CompoundIndex(def = "{'jobId': 1, 'seekerId': 1}", unique = true) // Prevents duplicate applications to the same job
+// Compound unique index preventing duplicate applications to the same job
+// Line 17 in Application.java:
+@CompoundIndex(def = "{'jobId': 1, 'seekerId': 1}", unique = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -22,20 +24,20 @@ public class Application {
     @Id
     private String id;
 
-    @Indexed
+    @Indexed // Fast lookup of all applicants for a job
     private String jobId;
 
-    @Indexed
+    @Indexed // Fast lookup of "My Applications" for a candidate
     private String seekerId;
 
-    // Snapshot of seeker info at the time of application
     private String seekerName;
     private String seekerEmail;
-    private String seekerPhone; // Used to trigger Twilio SMS updates
+    private String seekerPhone;
 
     private String resumeUrl;
     private String coverLetter;
 
+    @Indexed // Fast filtering by status (e.g. view only ACCEPTED candidates)
     private ApplicationStatus status = ApplicationStatus.APPLIED;
 
     @CreatedDate
