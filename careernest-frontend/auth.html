@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerNest - Authentication</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .auth-wrapper {
+            min-height: calc(100vh - 70px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .auth-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 36px;
+            max-width: 480px;
+            width: 100%;
+            box-shadow: var(--shadow-lg);
+        }
+        .auth-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: var(--bg-page);
+            padding: 6px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 24px;
+        }
+        .tab-btn {
+            padding: 10px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-size: 0.92rem;
+            cursor: pointer;
+            background: transparent;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+        .role-toggle {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .role-option {
+            border: 2px solid var(--border-color);
+            padding: 12px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .role-option.selected {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        .alert-box {
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: none;
+        }
+        .alert-error {
+            background-color: var(--status-rejected-bg);
+            color: var(--status-rejected-text);
+            display: block;
+        }
+        .alert-success {
+            background-color: var(--status-accepted-bg);
+            color: var(--status-accepted-text);
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<header class="navbar">
+    <div class="container nav-content">
+        <a href="index.html" class="brand">
+            <div class="brand-icon">🪺</div>
+            <div>Career<span>Nest</span></div>
+        </a>
+        <nav class="nav-links">
+            <a href="index.html">Explore Jobs</a>
+            <a href="employer-dashboard.html">Employer Dashboard</a>
+        </nav>
+    </div>
+</header>
+
+<div class="auth-wrapper">
+    <div class="auth-card">
+
+        <!-- Tab Switcher: Sign In vs Register -->
+        <div class="auth-tabs">
+            <button type="button" class="tab-btn active" id="tabLoginBtn">Sign In</button>
+            <button type="button" class="tab-btn" id="tabRegisterBtn">Create Account</button>
+        </div>
+
+        <!-- Feedback Banner -->
+        <div id="authAlert" class="alert-box"></div>
+
+        <!-- ========================================== -->
+        <!-- 1. LOGIN FORM                              -->
+        <!-- ========================================== -->
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="loginEmail">Email Address</label>
+                <input type="email" id="loginEmail" class="form-control" placeholder="user@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+            </div>
+            <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; margin-top: 12px;">
+                Sign In
+            </button>
+        </form>
+
+        <!-- ========================================== -->
+        <!-- 2. REGISTER FORM                           -->
+        <!-- ========================================== -->
+        <form id="registerForm" style="display: none;">
+
+            <label style="display: block; font-size: 0.88rem; font-weight: 600; margin-bottom: 8px;">Select Your Account Type</label>
+            <div class="role-toggle">
+                <div class="role-option selected" id="roleSeeker" onclick="selectRole('JOB_SEEKER')">
+                    🔍 Job Seeker
+                </div>
+                <div class="role-option" id="roleEmployer" onclick="selectRole('EMPLOYER')">
+                    🏢 Employer
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="regFullName">Full Name</label>
+                <input type="text" id="regFullName" class="form-control" placeholder="e.g. Siva Prasad" required>
+            </div>
+            <div class="form-group">
+                <label for="regEmail">Email Address</label>
+                <input type="email" id="regEmail" class="form-control" placeholder="siva@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="regPhone">Mobile Phone (Format: +919876543210)</label>
+                <input type="tel" id="regPhone" class="form-control" placeholder="+919876543210" pattern="^\+?[1-9]\d{9,14}$" required>
+            </div>
+            <div class="form-group">
+                <label for="regPassword">Password (Min 6 characters)</label>
+                <input type="password" id="regPassword" class="form-control" placeholder="••••••••" minlength="6" required>
+            </div>
+            <button type="submit" id="regSubmitBtn" class="btn btn-primary" style="width: 100%; margin-top: 12px;">
+                Create CareerNest Account
+            </button>
+        </form>
+
+    </div>
+</div>
+
+<!-- Central API Client & Auth Logic -->
+<script src="api.js"></script>
+<script src="auth.js"></script>
+
+</body>
+</html>

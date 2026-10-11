@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerNest - Find Your Next Engineering Opportunity</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Top Navigation -->
+<header class="navbar">
+    <div class="container nav-content">
+        <a href="index.html" class="brand">
+            <div class="brand-icon">🪺</div>
+            <div>Career<span>Nest</span></div>
+        </a>
+        <nav class="nav-links" id="navLinks">
+            <a href="index.html" class="active">Explore Jobs</a>
+            <!-- Dynamic links populated by app.js based on role -->
+            <span id="roleSpecificLinks"></span>
+            <span id="authNavContainer">
+          <a href="auth.html" id="authNavBtn" class="btn btn-primary">Sign In / Register</a>
+        </span>
+        </nav>
+    </div>
+</header>
+
+<!-- Hero & Search Section -->
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Find Your Next High-Impact Engineering Role</h1>
+        <p class="hero-subtitle">Discover opportunities verified directly by hiring teams. Apply in seconds and track your status in real time.</p>
+
+        <!-- Search Bar Form -->
+        <form class="search-box" id="searchForm">
+            <div class="input-group">
+                <span>🔍</span>
+                <input type="text" id="searchInput" placeholder="Search by job title or keyword..." aria-label="Search by job title or keyword">
+            </div>
+            <div class="input-group">
+                <span>📍</span>
+                <input type="text" id="locationInput" placeholder="Location (e.g. Bangalore, Remote)..." aria-label="Location">
+            </div>
+            <button type="submit" class="btn btn-primary">Search Jobs</button>
+        </form>
+    </div>
+</section>
+
+<!-- Main Content: Job Listings Grid -->
+<main class="container">
+    <div class="section-header">
+        <h2 class="section-title">Open Positions (<span id="jobCount">0</span>)</h2>
+        <span id="syncStatus" style="font-size: 0.9rem; font-weight: 600;">Connecting to Backend...</span>
+    </div>
+
+    <!-- Jobs are dynamically injected here by app.js -->
+    <section class="jobs-grid" id="jobsContainer"></section>
+</main>
+
+<!-- Easy Apply Modal Popup -->
+<div class="modal-overlay" id="applyModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div>
+                <h3 style="font-size: 1.25rem; font-weight: 700;" id="modalJobTitle">Apply for Job</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;" id="modalCompanyName">Company Name</p>
+            </div>
+            <button class="close-btn" id="closeModalBtn" aria-label="Close dialog">&times;</button>
+        </div>
+
+        <form id="applyForm">
+            <input type="hidden" id="applyJobId">
+            <div class="form-group">
+                <label for="applicantName">Full Name</label>
+                <input type="text" id="applicantName" class="form-control" placeholder="e.g. Siva Prasad" required>
+            </div>
+            <div class="form-group">
+                <label for="applicantEmail">Email Address</label>
+                <input type="email" id="applicantEmail" class="form-control" placeholder="name@example.com" required>
+            </div>
+            <div class="form-group">
+                <label for="applicantPhone">Phone Number (for Twilio SMS status alerts)</label>
+                <input type="tel" id="applicantPhone" class="form-control" placeholder="+919876543210" required>
+            </div>
+            <div class="form-group">
+                <label for="resumeLink">Resume Link (Google Drive / GitHub)</label>
+                <input type="url" id="resumeLink" class="form-control" placeholder="https://drive.google.com/..." required>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="btn btn-outline" id="cancelModalBtn">Cancel</button>
+                <button type="submit" id="submitApplyBtn" class="btn btn-primary">Submit Application</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- "My Applications" Modal for Job Seekers -->
+<div class="modal-overlay" id="myAppsModal">
+    <div class="modal-card" style="max-width: 650px;">
+        <div class="modal-header">
+            <h3 style="font-size: 1.25rem; font-weight: 700;">My Job Applications</h3>
+            <button class="close-btn" id="closeMyAppsBtn" aria-label="Close dialog">&times;</button>
+        </div>
+        <div id="myAppsContent" style="max-height: 400px; overflow-y: auto;">
+            <p style="text-align: center; color: var(--text-muted); padding: 20px;">Loading your applications...</p>
+        </div>
+        <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+            <button class="btn btn-outline" id="closeMyAppsBottomBtn">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Central API Client & Page Logic -->
+<script src="api.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

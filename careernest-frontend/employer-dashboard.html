@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerNest - Employer Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-top: 8px;
+        }
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow-x: auto;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 40px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.95rem;
+        }
+        th {
+            background: var(--bg-page);
+            font-weight: 700;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .status-select {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Top Navigation -->
+<header class="navbar">
+    <div class="container nav-content">
+        <a href="index.html" class="brand">
+            <div class="brand-icon">🪺</div>
+            <div>Career<span>Nest</span></div>
+        </a>
+        <nav class="nav-links">
+            <a href="index.html">Explore Jobs</a>
+            <a href="employer-dashboard.html" class="active">Employer Dashboard</a>
+            <span id="navEmployerName" style="font-weight: 600; font-size: 0.9rem; color: var(--primary);"></span>
+            <button onclick="API.logout()" class="btn btn-outline" style="padding: 6px 14px; font-size: 0.85rem;">Sign Out</button>
+        </nav>
+    </div>
+</header>
+
+<main class="container" style="padding-top: 40px; padding-bottom: 60px;">
+
+    <!-- Dashboard Header -->
+    <div class="section-header">
+        <div>
+            <h1 class="section-title">Employer Hiring Command Center</h1>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">Manage your job postings and review incoming candidate applications.</p>
+        </div>
+        <button class="btn btn-primary" id="openPostJobBtn">+ Post New Job</button>
+    </div>
+
+    <!-- KPI Metric Cards -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div style="color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">Active Job Postings</div>
+            <div class="stat-number" id="kpiJobCount">0</div>
+        </div>
+        <div class="stat-card">
+            <div style="color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">Total Applicants</div>
+            <div class="stat-number" id="kpiApplicantCount">0</div>
+        </div>
+        <div class="stat-card">
+            <div style="color: var(--text-muted); font-size: 0.9rem; font-weight: 600;">Offers Accepted</div>
+            <div class="stat-number" id="kpiAcceptedCount">0</div>
+        </div>
+    </div>
+
+    <!-- Candidate Review Table -->
+    <div class="section-header">
+        <h2 style="font-size: 1.25rem; font-weight: 700;">Candidate Applications</h2>
+        <span style="color: var(--primary); font-size: 0.85rem; font-weight: 600;">⚡ Changing status dispatches Twilio SMS</span>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>Application ID</th>
+                <th>Applied Position</th>
+                <th>Resume</th>
+                <th>Current Status</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody id="applicantTableBody">
+            <tr>
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                    Loading applications from MongoDB Atlas...
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Active Job Listings Table -->
+    <div class="section-header">
+        <h2 style="font-size: 1.25rem; font-weight: 700;">My Active Job Postings</h2>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th>Job Title</th>
+                <th>Company</th>
+                <th>Location</th>
+                <th>Salary Band</th>
+                <th>Deadline</th>
+                <th>Type</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody id="jobsTableBody">
+            <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                    Loading job postings...
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+<!-- Post New Job Modal -->
+<div class="modal-overlay" id="postJobModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 style="font-size: 1.25rem; font-weight: 700;">Post a New Engineering Role</h3>
+            <button class="close-btn" id="closePostJobBtn" aria-label="Close dialog">&times;</button>
+        </div>
+
+        <form id="postJobForm">
+            <div class="form-group">
+                <label for="newJobTitle">Job Title</label>
+                <input type="text" id="newJobTitle" class="form-control" placeholder="e.g. Senior Backend Engineer" minlength="3" required>
+            </div>
+            <div class="form-group">
+                <label for="newCompanyName">Company Name</label>
+                <input type="text" id="newCompanyName" class="form-control" placeholder="e.g. Netflix, Amazon, Startup" required>
+            </div>
+            <div class="form-group">
+                <label for="newLocation">Location</label>
+                <input type="text" id="newLocation" class="form-control" placeholder="e.g. Remote, Bangalore, Hyderabad" required>
+            </div>
+            <div class="form-group">
+                <label for="newSalary">Salary Details</label>
+                <input type="text" id="newSalary" class="form-control" placeholder="e.g. 25-35 LPA" required>
+            </div>
+            <div class="form-group">
+                <label for="newJobType">Job Type</label>
+                <select id="newJobType" class="form-control" required>
+                    <option value="FULL_TIME">FULL_TIME</option>
+                    <option value="REMOTE">REMOTE</option>
+                    <option value="CONTRACT">CONTRACT</option>
+                    <option value="INTERNSHIP">INTERNSHIP</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="newDeadline">Application Deadline</label>
+                <input type="date" id="newDeadline" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="newDescription">Job Description</label>
+                <textarea id="newDescription" class="form-control" rows="3" placeholder="Describe role requirements, tech stack, and responsibilities..." minlength="10" required></textarea>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                <button type="button" class="btn btn-outline" id="cancelPostJobBtn">Cancel</button>
+                <button type="submit" id="submitPostJobBtn" class="btn btn-primary">Publish to MongoDB Atlas</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="api.js"></script>
+<script src="dashboard.js"></script>
+
+</body>
+</html>

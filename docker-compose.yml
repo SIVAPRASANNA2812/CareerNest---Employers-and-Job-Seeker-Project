@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # -------------------------------------------------------------
+  # 1. Local MongoDB Database (Cloud-independent local fallback)
+  # -------------------------------------------------------------
+  mongodb:
+    image: mongo:7.0
+    container_name: careernest-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  # -------------------------------------------------------------
+  # 2. Spring Boot Backend Service
+  # -------------------------------------------------------------
+  backend:
+    build:
+      context: ./careernest-backend
+      dockerfile: Dockerfile
+    container_name: careernest-backend
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - MONGODB_URI=mongodb://mongodb:27017/careernestDb
+      - JWT_SECRET=mySecretKeyForTestingCareerNestApplication2026SecureKey123
+    depends_on:
+      - mongodb
+
+  # -------------------------------------------------------------
+  # 3. Nginx Web Frontend Service
+  # -------------------------------------------------------------
+  frontend:
+    build:
+      context: ./careernest-frontend
+      dockerfile: Dockerfile
+    container_name: careernest-frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+# Persistent storage volume for MongoDB data
+volumes:
+  mongo-data:
